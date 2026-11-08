@@ -1,0 +1,10 @@
+﻿ID,Category,Item,Handling
+DEP01,Dependency,Python and FastAPI,Local backend environment
+DEP02,Dependency,Node.js React and TypeScript,Local frontend environment
+DEP03,Dependency,SQLite database,Local prototype storage
+DEP04,Dependency,RFID vendor SDK and hardware,Document interface and use mock adapters
+DEP05,Dependency,Existing institutional ILMS,Use documented mock connector
+DEP06,Dependency,Email SMS CCTV and print services,Use provider neutral mocks
+EXC01,Exclusion,Physical installation or repair of RFID hardware,Outside candidate scope
+EXC02,Exclusion,Production database and restricted network access,Use synthetic local data only
+EXC03,Exclusion,Formal protocol or security certification,Do not claim without evidence

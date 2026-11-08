@@ -1,0 +1,9 @@
+﻿Risk_ID,Risk,Impact,Likelihood,Mitigation,Status
+R01,Limited development time,High,High,Prioritize critical workflows and document remaining scope,Open
+R02,RFID hardware unavailable,High,High,Use mock RFID adapters and documented interfaces,Mitigated by design
+R03,Existing ILMS unavailable,High,High,Use a mock ILMS connector and synthetic records,Mitigated by design
+R04,Migration data quality issues,High,Medium,Validate source records and reconcile counts,Open
+R05,Data loss during migration,High,Medium,Use transactions backups and restore verification,Open
+R06,Offline deployment limitations,High,Medium,Prepare offline installation and rollback instructions,Open
+R07,Security and access-control defects,High,Medium,Implement RBAC audit logging and security tests,Open
+R08,Incomplete acceptance coverage,High,High,Maintain RTM and clearly report unverified scenarios,Open

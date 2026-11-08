@@ -1,0 +1,7 @@
+﻿Issue_ID,Type,Title,Priority,Status,Owner
+ISS-001,Task,Review requirements baseline,High,Open,Developer
+ISS-002,Task,Review assumptions and dependencies,High,Open,Developer
+ISS-003,Task,Complete Phase 1 documentation review,High,Open,Developer
+ISS-004,Task,Prepare architecture design,High,Open,Developer
+ISS-005,Task,Implement prototype,High,Open,Developer
+ISS-006,Task,Prepare test evidence,High,Open,Developer
