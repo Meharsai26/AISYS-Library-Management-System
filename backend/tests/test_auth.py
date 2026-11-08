@@ -39,6 +39,21 @@ def setup_auth():
         db.flush()
 
         permission = Permission(code="audit:read")
+        for code in [
+            "catalog:read",
+            "catalog:write",
+            "member:read",
+            "member:write",
+            "circulation:write",
+        ]:
+            db.add(Permission(code=code))
+            db.flush()
+            db.add(
+                RolePermission(
+                    role_id=admin_role.id,
+                    permission_code=code,
+                )
+            )
         db.add(permission)
         db.flush()
 
@@ -188,3 +203,196 @@ def test_login_creates_audit_event(setup_auth):
         ).all()
 
         assert len(events) == 1
+
+
+def test_create_and_list_book(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    response = client.post(
+        "/api/v1/bibliographic-records",
+        headers=headers(token),
+        json={
+            "title": "Synthetic Library Book",
+            "author": "Demo Author",
+            "isbn": "9780000000001",
+        },
+    )
+
+    assert response.status_code == 201
+
+    books = client.get(
+        "/api/v1/bibliographic-records",
+        headers=headers(token),
+    )
+
+    assert books.status_code == 200
+    assert len(books.json()) == 1
+
+
+def test_create_item(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    book = client.post(
+        "/api/v1/bibliographic-records",
+        headers=headers(token),
+        json={"title": "Synthetic RFID Book"},
+    )
+
+    assert book.status_code == 201
+
+    item = client.post(
+        "/api/v1/items",
+        headers=headers(token),
+        json={
+            "bib_id": book.json()["id"],
+            "accession_number": "SYN-ITEM-001",
+        },
+    )
+
+    assert item.status_code == 201
+    assert item.json()["status"] == "AVAILABLE"
+
+
+def test_create_member(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    response = client.post(
+        "/api/v1/members",
+        headers=headers(token),
+        json={
+            "card_number": "SYN-MEMBER-001",
+            "display_name": "Synthetic Member",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["status"] == "ACTIVE"
+
+
+def create_circulation_records(client, token, reference=False):
+    auth = headers(token)
+
+    book = client.post(
+        "/api/v1/bibliographic-records",
+        headers=auth,
+        json={"title": "Synthetic Circulation Test"},
+    )
+    assert book.status_code == 201
+
+    item = client.post(
+        "/api/v1/items",
+        headers=auth,
+        json={
+            "bib_id": book.json()["id"],
+            "accession_number": "CIRC-001",
+            "is_reference": reference,
+        },
+    )
+    assert item.status_code == 201
+
+    member = client.post(
+        "/api/v1/members",
+        headers=auth,
+        json={
+            "card_number": "CIRC-MEMBER-001",
+            "display_name": "Synthetic Borrower",
+        },
+    )
+    assert member.status_code == 201
+
+    return item.json()["id"], member.json()["id"]
+
+
+def test_checkout_success_and_duplicate_prevention(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    item_id, member_id = create_circulation_records(
+        client, token
+    )
+
+    payload = {"item_id": item_id, "member_id": member_id}
+
+    first = client.post(
+        "/api/v1/loans/checkout",
+        headers=headers(token),
+        json=payload,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/api/v1/loans/checkout",
+        headers=headers(token),
+        json=payload,
+    )
+    assert duplicate.status_code == 409
+
+
+def test_reference_item_checkout_denied(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    item_id, member_id = create_circulation_records(
+        client, token, reference=True
+    )
+
+    response = client.post(
+        "/api/v1/loans/checkout",
+        headers=headers(token),
+        json={"item_id": item_id, "member_id": member_id},
+    )
+
+    assert response.status_code == 409
+
+
+def test_checkout_and_return(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    item_id, member_id = create_circulation_records(
+        client, token
+    )
+
+    checkout = client.post(
+        "/api/v1/loans/checkout",
+        headers=headers(token),
+        json={"item_id": item_id, "member_id": member_id},
+    )
+    assert checkout.status_code == 201
+
+    loan_id = checkout.json()["loan_id"]
+
+    returned = client.post(
+        f"/api/v1/loans/{loan_id}/return",
+        headers=headers(token),
+    )
+
+    assert returned.status_code == 200
+    assert returned.json()["status"] == "RETURNED"
+
+    second_return = client.post(
+        f"/api/v1/loans/{loan_id}/return",
+        headers=headers(token),
+    )
+    assert second_return.status_code == 409
+
+    items = client.get(
+        "/api/v1/items",
+        headers=headers(token),
+    )
+    assert items.json()[0]["status"] == "AVAILABLE"

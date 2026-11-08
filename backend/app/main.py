@@ -1,6 +1,9 @@
 from fastapi import FastAPI, HTTPException
 
 from app.api.auth import router as auth_router
+from app.api.circulation import router as circulation_router
+from app.api.catalog import router as catalog_router
+from app.api.members import router as members_router
 from app.api.admin import router as admin_router
 from app.core.config import settings
 from app.db.session import check_database
@@ -12,6 +15,9 @@ app = FastAPI(
 )
 
 app.include_router(auth_router)
+app.include_router(circulation_router)
+app.include_router(catalog_router)
+app.include_router(members_router)
 app.include_router(admin_router)
 
 
@@ -34,4 +40,3 @@ def health_ready():
         )
 
     return {"status": "ready", "database": "connected"}
-
