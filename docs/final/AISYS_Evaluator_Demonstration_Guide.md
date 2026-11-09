@@ -1,8 +1,8 @@
-﻿# AISYS RFID-Enabled Library Management System
+# AISYS RFID-Enabled Library Management System
 ## Evaluator Demonstration and Local Execution Guide
 
-**Technical evaluation:** November 2026  
-**Implementation:** Local working prototype with simulated RFID and ILMS boundaries  
+**Technical evaluation:** November 2026
+**Implementation:** Local working prototype with simulated RFID and ILMS boundaries
 **Production status:** Not production certified
 
 ---
