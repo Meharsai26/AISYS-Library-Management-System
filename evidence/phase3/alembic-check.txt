@@ -1,10 +1,5 @@
-﻿.\.venv\Scripts\python.exe : INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
-At line:1 char:1
-+ .\.venv\Scripts\python.exe -m alembic check 2>&1 |
-+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : NotSpecified: (INFO  [alembic....mpl SQLiteImpl.:String) [], RemoteException
-    + FullyQualifiedErrorId : NativeCommandError
- 
+No new upgrade operations detected.
+INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
 INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
 INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.schemas
 INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.tables
@@ -12,4 +7,3 @@ INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogener
 INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.constraints
 INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.defaults
 INFO  [alembic.runtime.plugins] setting up autogenerate plugin alembic.autogenerate.comments
-No new upgrade operations detected.
