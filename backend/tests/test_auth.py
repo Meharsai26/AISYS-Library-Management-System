@@ -44,7 +44,7 @@ def setup_auth():
             "catalog:write",
             "member:read",
             "member:write",
-            "circulation:write",
+            "circulation:write", "tag:read", "tag:write",
         ]:
             db.add(Permission(code=code))
             db.flush()
@@ -396,3 +396,87 @@ def test_checkout_and_return(setup_auth):
         headers=headers(token),
     )
     assert items.json()[0]["status"] == "AVAILABLE"
+
+
+def test_mock_rfid_assignment_and_scan(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    item_id, _ = create_circulation_records(client, token)
+    auth = headers(token)
+
+    assigned = client.post(
+        "/api/v1/rfid/tags/assign",
+        headers=auth,
+        json={"item_id": item_id, "epc": "MOCK-EPC-TEST001"},
+    )
+
+    assert assigned.status_code == 201
+    assert assigned.json()["hardware_connected"] is False
+
+    scanned = client.post(
+        "/api/v1/rfid/scans/mock",
+        headers=auth,
+        json={"epc": "MOCK-EPC-TEST001"},
+    )
+
+    assert scanned.status_code == 200
+    assert scanned.json()["item_id"] == item_id
+    assert scanned.json()["source"] == "MOCK"
+    assert scanned.json()["hardware_connected"] is False
+
+
+def test_mock_rfid_duplicate_assignment_rejected(setup_auth):
+    client, _, admin, _ = setup_auth
+    token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    item_id, _ = create_circulation_records(client, token)
+    auth = headers(token)
+
+    payload = {"item_id": item_id, "epc": "MOCK-EPC-DUP001"}
+
+    first = client.post(
+        "/api/v1/rfid/tags/assign",
+        headers=auth,
+        json=payload,
+    )
+    assert first.status_code == 201
+
+    duplicate = client.post(
+        "/api/v1/rfid/tags/assign",
+        headers=auth,
+        json=payload,
+    )
+    assert duplicate.status_code == 409
+
+
+def test_mock_rfid_unknown_tag_and_access_control(setup_auth):
+    client, _, admin, librarian = setup_auth
+    admin_token = login(
+        client, admin, "SyntheticAdminPass123!"
+    ).json()["access_token"]
+
+    unknown = client.post(
+        "/api/v1/rfid/scans/mock",
+        headers=headers(admin_token),
+        json={"epc": "MOCK-EPC-UNKNOWN"},
+    )
+    assert unknown.status_code == 404
+
+    librarian_token = login(
+        client, librarian, "SyntheticLibrarianPass123!"
+    ).json()["access_token"]
+
+    forbidden = client.post(
+        "/api/v1/rfid/tags/assign",
+        headers=headers(librarian_token),
+        json={
+            "item_id": "nonexistent-item",
+            "epc": "MOCK-EPC-DENIED",
+        },
+    )
+    assert forbidden.status_code == 403

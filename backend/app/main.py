@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.auth import router as auth_router
+from app.api.rfid import router as rfid_router
 from app.api.circulation import router as circulation_router
 from app.api.catalog import router as catalog_router
 from app.api.members import router as members_router
@@ -24,6 +25,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router)
+app.include_router(rfid_router)
 app.include_router(circulation_router)
 app.include_router(catalog_router)
 app.include_router(members_router)

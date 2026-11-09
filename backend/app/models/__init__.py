@@ -11,3 +11,4 @@ from app.models.foundation import (
     UserRole,
 )
 from app.models.auth import AuthSession
+from app.models.rfid import RFIDTag

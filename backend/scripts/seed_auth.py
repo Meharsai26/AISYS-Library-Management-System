@@ -12,7 +12,7 @@ from app.models.foundation import (
 ROLE_PERMISSIONS = {
     "ADMIN": {
         "admin:read", "admin:users", "admin:roles",
-        "audit:read", "catalog:read", "catalog:write",
+        "audit:read", "catalog:read", "catalog:write", "tag:read", "tag:write",
         "member:read", "member:write",
         "circulation:write", "report:read",
     },
