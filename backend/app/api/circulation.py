@@ -10,6 +10,7 @@ from app.core.security import (
     get_db, record_audit, require_permission,
 )
 from app.models.foundation import LibraryItem, Loan, Member
+from app.models.rfid import RFIDTag
 from app.services.integration_outbox import queue_ilms_event
 from app.services.mock_ilms import ILMSOperation
 
@@ -92,6 +93,15 @@ def checkout(
 
         db.add(loan)
         db.flush()
+
+        db.execute(
+            update(RFIDTag)
+            .where(
+                RFIDTag.item_id == item.id,
+                RFIDTag.status == "ACTIVE",
+            )
+            .values(security_armed=False)
+        )
 
         record_audit(
             db,
@@ -183,6 +193,15 @@ def return_loan(
                 status_code=409,
                 detail="Item state conflict",
             )
+
+        db.execute(
+            update(RFIDTag)
+            .where(
+                RFIDTag.item_id == loan.item_id,
+                RFIDTag.status == "ACTIVE",
+            )
+            .values(security_armed=True)
+        )
 
         record_audit(
             db,
