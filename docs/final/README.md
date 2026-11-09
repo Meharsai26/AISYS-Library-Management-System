@@ -1,13 +1,61 @@
-# Phase 4 — Final Technical Submission
+# AISYS - Final Technical Evaluation Submission
 
-Date: 2026-11-09. Baseline source commit: `66b870c`.
+**Date:** November 9, 2026
+**Submission deadline:** November 10, 2026
+**Repository:** https://github.com/Meharsai26/AISYS-Library-Management-System
 
-- `AISYS_Phase4_Canonical_RTM.xlsx` — evidence-graded requirements and AC coverage.
-- `AISYS_Phase4_Final_Technical_Report.docx` — final engineering narrative.
-- `AISYS_Phase4_Final_Presentation_16_Slides.pptx` — 16-slide evaluator deck.
+## Current submission deliverables
 
-A PDF of the report is supplied in the separate final delivery ZIP; add it here too if desired.
+1. `AISYS_Final_Technical_Report.pdf`
+   - Primary readable technical report.
+2. `AISYS_Final_Technical_Report.docx`
+   - Editable technical report.
+3. `AISYS_Final_Presentation_16_Slides.pptx`
+   - Sixteen-slide technical presentation.
+4. `AISYS_Final_Canonical_RTM.xlsx`
+   - Requirements and acceptance traceability with evidence boundaries.
+5. `AISYS_Evaluator_Demonstration_Guide.md`
+   - Local setup, API walkthrough and reproduction instructions.
 
-**Verification boundaries:** Recorded Phase 3: 19 backend tests passed, frontend build succeeded, software-only RFID APIs tested. Physical RFID, NCIP/SIP2, real ILMS, offline synchronization and production deployment are NOT implemented/verified.
+Supporting source code, architecture documents, test evidence and
+implementation notes are maintained in the repository.
 
-Retain Phase 1 historical files. Re-run checks and verify Git status/commit/push before external submission.
+## Local verification
+
+Recorded Phase 7 checks:
+
+- Backend: 114 tests passed, zero failed and one deprecation warning.
+- Frontend: production build succeeded.
+- SQLite: integrity OK and zero foreign-key violations.
+- Alembic: database and script heads agree at 5c4d888ae5e1.
+
+Evidence: `../../evidence/phase7/final-verification.md`.
+
+## Current implementation boundaries
+
+The prototype includes React/TypeScript, FastAPI, SQLite, RBAC,
+catalogue, members, circulation, renewal/fine rules, synthetic RFID
+assign/scan and security-state updates, CSV member import,
+mock inventory reconciliation, mock NCIP/SIP2 adapters
+and transactional outbox handling.
+
+Physical readers/gates, real ILMS exchanges, smart-card authentication,
+persistent inventory stocktakes, complete spreadsheet-scale acceptance,
+automatic production workers, offline installer/update/rollback and
+production certification are not demonstrated.
+
+The final RTM distinguishes partially implemented, design-only and
+unaccepted scenarios. No AC01-AC10 combined scenario is signed off.
+
+## Historical files retained
+
+The `AISYS_Phase4_*` files in this folder are earlier project
+artifacts. They remain available for audit/traceability purposes.
+
+## Submission safety
+
+Exclude temporary Office files, credentials, local databases,
+virtual environments, dependency folders and real personal data
+from any external delivery archive.
+
+All demonstration data must be synthetic.
