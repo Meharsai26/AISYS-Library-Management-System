@@ -12,3 +12,6 @@ from app.models.foundation import (
 )
 from app.models.auth import AuthSession
 from app.models.rfid import RFIDTag
+
+from app.models.migration import ImportBatch, ImportStagingRow
+from app.models.integration import IntegrationOutbox

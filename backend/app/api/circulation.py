@@ -10,6 +10,8 @@ from app.core.security import (
     get_db, record_audit, require_permission,
 )
 from app.models.foundation import LibraryItem, Loan, Member
+from app.services.integration_outbox import queue_ilms_event
+from app.services.mock_ilms import ILMSOperation
 
 router = APIRouter(prefix="/api/v1/loans", tags=["Circulation"])
 
@@ -29,6 +31,7 @@ def checkout(
     identity=Depends(require_permission("circulation:write")),
     db: Session = Depends(get_db),
 ):
+    from app.core.config import settings
     member = db.get(Member, payload.member_id)
     item = db.get(LibraryItem, payload.item_id)
 
@@ -44,6 +47,11 @@ def checkout(
             detail="Member is not eligible",
         )
 
+    if member.fine_balance_paise > settings.max_fine_paise:
+        raise HTTPException(
+            status_code=409,
+            detail="Fine limit exceeded",
+        )
     if item.is_reference:
         raise HTTPException(
             status_code=409,
@@ -93,6 +101,12 @@ def checkout(
             entity_type="LOAN",
             entity_id=loan.id,
         )
+        queue_ilms_event(
+            db,
+            loan_id=loan.id,
+            operation=ILMSOperation.CHECKOUT,
+        )
+
         db.commit()
 
     except IntegrityError:
@@ -114,7 +128,7 @@ def checkout(
         "item_id": loan.item_id,
         "status": "ACTIVE",
         "due_at": loan.due_at,
-        "integration_status": "NOT_CONFIGURED",
+        "integration_status": "QUEUED",
     }
 
 
@@ -178,6 +192,12 @@ def return_loan(
             entity_type="LOAN",
             entity_id=loan.id,
         )
+        queue_ilms_event(
+            db,
+            loan_id=loan.id,
+            operation=ILMSOperation.CHECKIN,
+        )
+
         db.commit()
 
     except HTTPException:
@@ -191,5 +211,130 @@ def return_loan(
         "loan_id": loan_id,
         "status": "RETURNED",
         "returned_at": current,
-        "integration_status": "NOT_CONFIGURED",
+        "integration_status": "QUEUED",
+    }
+
+
+@router.post("/{loan_id}/renew")
+def renew_loan(
+    loan_id: str,
+    identity=Depends(require_permission("circulation:write")),
+    db: Session = Depends(get_db),
+):
+    """Renew an eligible active loan with a guarded update."""
+    from app.core.config import settings
+
+    loan = db.get(Loan, loan_id)
+
+    if loan is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Loan not found",
+        )
+
+    if loan.returned_at is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Loan already returned",
+        )
+
+    member = db.get(Member, loan.member_id)
+    item = db.get(LibraryItem, loan.item_id)
+
+    if member is None or item is None:
+        raise HTTPException(
+            status_code=409,
+            detail="Member or item unavailable",
+        )
+
+    if member.status != "ACTIVE":
+        raise HTTPException(
+            status_code=409,
+            detail="Member is not eligible",
+        )
+
+    if member.fine_balance_paise > settings.max_fine_paise:
+        raise HTTPException(
+            status_code=409,
+            detail="Fine limit exceeded",
+        )
+    if item.is_reference:
+        raise HTTPException(
+            status_code=409,
+            detail="Reference item cannot be renewed",
+        )
+
+    if item.status != "CHECKED_OUT":
+        raise HTTPException(
+            status_code=409,
+            detail="Item is not checked out",
+        )
+
+    if loan.renewed_count >= settings.max_loan_renewals:
+        raise HTTPException(
+            status_code=409,
+            detail="Maximum renewals reached",
+        )
+
+    old_count = loan.renewed_count
+    old_due_at = loan.due_at
+
+    new_due_at = old_due_at + timedelta(
+        days=settings.loan_renewal_days
+    )
+
+    try:
+        result = db.execute(
+            update(Loan)
+            .where(
+                Loan.id == loan_id,
+                Loan.returned_at.is_(None),
+                Loan.renewed_count == old_count,
+                Loan.due_at == old_due_at,
+                Loan.renewed_count < settings.max_loan_renewals,
+            )
+            .values(
+                due_at=new_due_at,
+                renewed_count=old_count + 1,
+            )
+        )
+
+        if result.rowcount != 1:
+            db.rollback()
+            raise HTTPException(
+                status_code=409,
+                detail="Loan changed concurrently",
+            )
+
+        record_audit(
+            db,
+            "LOAN_RENEWAL",
+            "SUCCESS",
+            actor_id=identity["user"].id,
+            entity_type="LOAN",
+            entity_id=loan_id,
+        )
+
+        queue_ilms_event(
+            db,
+            loan_id=loan.id,
+            operation=ILMSOperation.RENEW,
+        )
+
+        db.commit()
+
+    except HTTPException:
+        db.rollback()
+        raise
+
+    except Exception:
+        db.rollback()
+        raise
+
+    return {
+        "loan_id": loan_id,
+        "status": "ACTIVE",
+        "renewed_count": old_count + 1,
+        "due_at": new_due_at,
+        "integration_status": "QUEUED",
     }

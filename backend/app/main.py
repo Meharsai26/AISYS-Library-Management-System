@@ -7,6 +7,7 @@ from app.api.circulation import router as circulation_router
 from app.api.catalog import router as catalog_router
 from app.api.members import router as members_router
 from app.api.admin import router as admin_router
+from app.api.imports import router as imports_router
 from app.core.config import settings
 from app.db.session import check_database
 
@@ -30,6 +31,7 @@ app.include_router(circulation_router)
 app.include_router(catalog_router)
 app.include_router(members_router)
 app.include_router(admin_router)
+app.include_router(imports_router)
 
 
 @app.get("/api/v1/health/live")

@@ -141,6 +141,10 @@ class Member(Base):
             "status IN ('ACTIVE', 'BLOCKED', 'EXPIRED')",
             name="ck_member_status"
         ),
+        CheckConstraint(
+            "fine_balance_paise >= 0",
+            name="ck_member_fine_nonnegative",
+        ),
     )
 
     id: Mapped[str] = mapped_column(
@@ -157,6 +161,9 @@ class Member(Base):
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utc_now
+    )
+    fine_balance_paise: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
     )
 
 

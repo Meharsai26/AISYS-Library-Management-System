@@ -14,10 +14,22 @@ Candidate technical evaluation — local prototype and proposed modular RFID-ena
 - Phase 2: completed proposed architecture and design; not an AISYS/vendor signoff.
 - Phase 3: local prototype built; recorded evidence shows 19 backend tests passed and React production build succeeded. Browser-originated API flow and mock RFID assignment/scan verified.
 - Phase 4: final technical report, presentation and canonical RTM in `docs/final/`.
+- Phase 5: core gap closure implemented and verified locally:
+  - CSV member import with staging, validation and reconciliation.
+  - Loan renewal with eligibility and renewal-count checks.
+  - Member fine balance in INR paise and configurable fine limit.
+  - Simulated NCIP/SIP2 request and outcome adapters.
+  - Transactional integration outbox for circulation events.
+  - Manually invoked mock dispatcher with retry and dead-letter states.
+  - Backend regression: 101 tests passed on 2026-11-09.
+  - SQLite migration head: 5c4d888ae5e1, integrity verified.
+  - Frontend TypeScript/Vite production build passed.
+  - See `docs/implementation/phase5-core-gap-closure.md`.
 
 ## Navigation
 - [Documentation index](docs/README.md)
 - [Phase 3 runbook](docs/implementation/phase3-prototype-runbook.md)
+- [Phase 5 implementation and evidence](docs/implementation/phase5-core-gap-closure.md)
 - [Final submission](docs/final/README.md)
 
 ## Boundaries
